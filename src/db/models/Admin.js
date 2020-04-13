@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const moment = require("moment");
 
 const config = require("../../config");
 
@@ -15,7 +16,12 @@ const adminSchema = new mongoose.Schema(
     password: {
       type: mongoose.SchemaTypes.String,
       required: true,
-      trim: true,
+    },
+    loginDate: {
+      type: mongoose.SchemaTypes.String,
+    },
+    loginTime: {
+      type: mongoose.SchemaTypes.String,
     },
     token: {
       type: mongoose.SchemaTypes.String,
@@ -27,12 +33,8 @@ const adminSchema = new mongoose.Schema(
 );
 
 adminSchema.pre("save", async function (next) {
-  try {
-    this.password = await bcrypt.hash(this.password, 8);
-    next();
-  } catch (error) {
-    throw new Error(error);
-  }
+  this.password = await bcrypt.hash(this.password, 8);
+  next();
 });
 
 adminSchema.statics.findByCredentials = async function (username, password) {
@@ -40,10 +42,14 @@ adminSchema.statics.findByCredentials = async function (username, password) {
     const admin = await Admin.findOne({ username });
     const pwd = await bcrypt.compare(password, admin.password);
     if (!pwd) throw new Error("Password did not match!!");
+
     admin.token = await jwt.sign(
       { _id: admin._id.toString(), admin: admin.username },
       config.JWT_SECRET
     );
+
+    admin.loginDate = moment().format("MMMM Do YYYY");
+    admin.loginTime = moment().format("h:mm:ss a");
     await admin.save();
     return admin;
   } catch (error) {
