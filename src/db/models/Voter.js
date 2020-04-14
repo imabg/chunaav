@@ -5,6 +5,9 @@ const config = require("../../config");
 
 const voterSchema = new mongoose.Schema(
   {
+    image: {
+      type: mongoose.SchemaTypes.String,
+    },
     name: {
       type: mongoose.SchemaTypes.String,
       required: true,
@@ -57,11 +60,15 @@ const voterSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-voterSchema.statics.findByCredentials = async function (aadhar_num, phone) {
+voterSchema.statics.findByCredentials = async function (aadhar_num, phone_num) {
   try {
-    const voter = await Voter.findOne({ aadhar_num, phone });
-    if (voter.isVoted) {
-      throw new Error("You already cast your vote.");
+    const voter = await Voter.findOne({ aadhar_num, phone_num });
+    if (voter) {
+      if (voter.isVoted) {
+        throw new Error("You already cast your vote.");
+      }
+    } else {
+      throw new Error("Aadhar number or Password won't match");
     }
     if (!voter) throw new Error("Aadhar number is not register");
     const token = await jwt.sign(
