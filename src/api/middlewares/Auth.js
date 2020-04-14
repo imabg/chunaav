@@ -10,9 +10,8 @@ module.exports = async (req, res, next) => {
     if (decoded.admin) {
       const admin = await Admin.findOne({
         _id: decoded._id,
-        token: token,
       });
-      req.id = decoded._id;
+      req.id = admin._id;
       req.admin = admin;
     } else {
       const voter = await Voter.findOne({
