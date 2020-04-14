@@ -7,10 +7,12 @@ const router = express.Router();
 const AdminController = require("../controller/AdminController");
 const VoterController = require("../controller/VoterController");
 
+router.get("/api/admin/voter/details", auth, AdminController.fetchVoter)
 router.post("/api/admin/addVoter", auth, AdminController.addVoter);
 router.put("/api/admin/updateVoter", auth, AdminController.updateVoter);
 router.delete("/api/admin/deleteVoter", auth, AdminController.deleteVoter);
 
+router.get("/api/admin/candidate/details", auth, AdminController.candidateDetails)
 router.post("/api/admin/addCandidate", auth, AdminController.addCandidate);
 router.put("/api/admin/updateCandidate", auth, AdminController.updateCandidate);
 router.delete(
@@ -22,15 +24,14 @@ router.delete(
 router.post("/api/login", VoterController.login);
 router.get("/api/voter/details", auth, VoterController.voterDetails);
 
-//Caste Vote
+//Cast Vote
 router.post("/api/vote", auth, VoterController.vote);
 
 // router.get("/api/admin/dashboard", auth, AdminController.dashboard);
 
-// ! Add admin API
+// ! ADMIN API's
 router.post("/api/admin/add", AdminController.add);
-
-// ADMIN LOGIN
 router.post("/api/admin/login", AdminController.login);
+router.get("/api/admin/details", auth, AdminController.fetchAdmin);
 
 module.exports = router;

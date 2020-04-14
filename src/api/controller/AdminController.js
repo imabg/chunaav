@@ -10,9 +10,26 @@ exports.add = async (req, res, next) => {
   try {
     const admin = new Admin(req.body);
     const savedAdmin = await admin.save();
-    res.send(responseHandler(savedAdmin));
+    res.send(responseHandler(savedAdmin._id));
   } catch (error) {
     error.code = 401;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+};
+
+exports.fetchAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.id);
+    const returnAdmin = admin.toObject();
+    delete returnAdmin.password;
+    delete returnAdmin.updatedAt;
+    delete returnAdmin._id;
+    delete returnAdmin.token;
+    res.send(responseHandler(returnAdmin));
+  } catch (error) {
+    error.code = 404;
     res
       .status(error.code)
       .send({ success: false, code: error.code, err: error.message });
@@ -31,6 +48,21 @@ exports.login = async (req, res, next) => {
       .send({ success: false, code: error.code, err: error.message });
   }
 };
+
+exports.fetchVoter = async(req, res) => {
+  try {
+    const aadhar_num = req.params;
+    const voter = await Voter.findOne(aadhar_num);
+    const voterDetails = voter.toObject()
+    delete voterDetails.tokens
+    res.send(responseHandler(voterDetails))
+  } catch (error) {
+    error.code = 401;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+}
 
 exports.addVoter = async (req, res, next) => {
   try {
@@ -77,6 +109,21 @@ exports.deleteVoter = async (req, res, next) => {
       .send({ success: false, code: error.code, err: error.message });
   }
 };
+
+exports.candidateDetails = async(req, res) => {
+  try {
+    const aadhar_num = req.params;
+    const cand = await Candidate.findOne(aadhar_num);
+    const candDetails = cand.toObject()
+    delete candDetails.votes
+    res.send(responseHandler(candDetails))
+  } catch (error) {
+    error.code = 401;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+}
 
 exports.addCandidate = async (req, res, next) => {
   try {

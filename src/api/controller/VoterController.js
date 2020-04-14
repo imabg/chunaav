@@ -44,8 +44,8 @@ exports.vote = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { aadhar_num, phone } = req.body;
-    const voter = await Voter.findByCredentials(aadhar_num, phone);
+    const { aadhar_num, phone_num } = req.body;
+    const voter = await Voter.findByCredentials(aadhar_num, phone_num);
     if (voter.email) {
       const mailObj = {
         to: voter.email,
