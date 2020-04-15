@@ -2,6 +2,7 @@ const Admin = require("../../db/models/Admin");
 const Voter = require("../../db/models/Voter");
 const Candidate = require("../../db/models/Candidates");
 
+const S3 = require("../../utils/S3");
 const sendMail = require("../../utils/SendMail");
 const responseHandler = require("../../utils/ResponseHandler");
 const config = require("../../config");
@@ -49,20 +50,21 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.fetchVoter = async(req, res) => {
+exports.fetchVoter = async (req, res) => {
   try {
-    const aadhar_num = req.params;
-    const voter = await Voter.findOne(aadhar_num);
-    const voterDetails = voter.toObject()
-    delete voterDetails.tokens
-    res.send(responseHandler(voterDetails))
+    const aadhar_num = req.query.aadhar_num;
+    const voter = await Voter.findOne({ aadhar_num: aadhar_num });
+    if (!voter) throw new Error("Voter is not registered ✋");
+    const voterDetails = voter.toObject();
+    delete voterDetails.tokens;
+    res.send(responseHandler(voterDetails));
   } catch (error) {
     error.code = 401;
     res
       .status(error.code)
       .send({ success: false, code: error.code, err: error.message });
   }
-}
+};
 
 exports.addVoter = async (req, res, next) => {
   try {
@@ -88,8 +90,9 @@ exports.addVoter = async (req, res, next) => {
 
 exports.updateVoter = async (req, res, next) => {
   try {
-    const voter = await Voter.findByIdAndUpdate(req.id);
-    res.send(responseHandler(voter));
+    const _id = req.query.id;
+    const voter = await Voter.findByIdAndUpdate({ _id }, req.body);
+    res.send(responseHandler("voter"));
   } catch (error) {
     error.code = 404;
     res
@@ -98,9 +101,26 @@ exports.updateVoter = async (req, res, next) => {
   }
 };
 
+exports.uploadVoterImage = async (req, res) => {
+  try {
+    const _id = req.params;
+    const VOTERS_BUCKET = `${config.VOTERS_BUCKET}`;
+    const upload = await S3(VOTERS_BUCKET, req.body);
+    const voter = await Voter.findByIdAndUpdate({ _id }, { image: upload });
+    res.send(responseHandler("Uploaded successfully"));
+  } catch (error) {
+    console.log(error);
+    error.code = 406;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.messag });
+  }
+};
+
 exports.deleteVoter = async (req, res, next) => {
   try {
-    const voter = await Voter.findByIdAndDelete(req.id);
+    const _id = req.query.id;
+    const voter = await Voter.deleteOne(_id);
     res.send(responseHandler("Deleted successfully"));
   } catch (error) {
     error.code = 404;
@@ -110,20 +130,20 @@ exports.deleteVoter = async (req, res, next) => {
   }
 };
 
-exports.candidateDetails = async(req, res) => {
+exports.candidateDetails = async (req, res) => {
   try {
     const aadhar_num = req.params;
     const cand = await Candidate.findOne(aadhar_num);
-    const candDetails = cand.toObject()
-    delete candDetails.votes
-    res.send(responseHandler(candDetails))
+    const candDetails = cand.toObject();
+    delete candDetails.votes;
+    res.send(responseHandler(candDetails));
   } catch (error) {
     error.code = 401;
     res
       .status(error.code)
       .send({ success: false, code: error.code, err: error.message });
   }
-}
+};
 
 exports.addCandidate = async (req, res, next) => {
   try {
@@ -154,8 +174,9 @@ exports.addCandidate = async (req, res, next) => {
 
 exports.updateCandidate = async (req, res, next) => {
   try {
-    const voter = await Candidate.findByIdAndUpdate(req.id);
-    res.send(responseHandler(voter));
+    const _id = req.query.id;
+    const candidate = await Candidate.findByIdAndUpdate({ _id }, req.body);
+    res.send(responseHandler(candidate));
   } catch (error) {
     error.code = 404;
     res
@@ -164,9 +185,25 @@ exports.updateCandidate = async (req, res, next) => {
   }
 };
 
+exports.uploadCandidateLogo = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const CANDIDATES_BUCKET = `${config.CANDIDATES_BUCKET}`;
+    const upload = await S3(CANDIDATES_BUCKET);
+    await Candidate.findByIdAndUpdate({ id }, { logo: upload });
+    res.send(responseHandler("Uploaded successfully"));
+  } catch (error) {
+    error.code = 406;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+};
+
 exports.deleteCandidate = async (req, res, next) => {
   try {
-    const voter = await Candidate.findByIdAndDelete(req.id);
+    const _id = req.query.id;
+    await Candidate.findByIdAndDelete(_id);
     res.send(responseHandler("Deleted successfully"));
   } catch (error) {
     error.code = 404;
