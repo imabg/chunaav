@@ -1,8 +1,10 @@
 const express = require("express");
-
+const multer = require("multer")
 const auth = require("../middlewares/Auth");
 
 const router = express.Router();
+var storage = multer.memoryStorage();
+var upload = multer({ storage: storage });
 
 const AdminController = require("../controller/AdminController");
 const VoterController = require("../controller/VoterController");
@@ -33,5 +35,10 @@ router.post("/api/vote", auth, VoterController.vote);
 router.post("/api/admin/add", AdminController.add);
 router.post("/api/admin/login", AdminController.login);
 router.get("/api/admin/details", auth, AdminController.fetchAdmin);
+
+// ! on-HOLD
+// Upload routes
+router.post("/api/admin/upload/voter", auth, upload.single("file"), AdminController.uploadVoterImage)
+router.post("/api/admin/upload/candidate/logo", auth, AdminController.uploadCandidateLogo)
 
 module.exports = router;
