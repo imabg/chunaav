@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const candidateSchema = new mongoose.Schema(
   {
-    image: {
+    logo: {
       type: mongoose.SchemaTypes.String,
       required: true,
       trim: true,
