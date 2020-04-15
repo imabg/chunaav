@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const moment = require("moment");
+const salt = bcrypt.genSaltSync(8);
 
 const config = require("../../config");
 
@@ -33,13 +34,16 @@ const adminSchema = new mongoose.Schema(
 );
 
 adminSchema.pre("save", async function (next) {
-  this.password = await bcrypt.hash(this.password, 8);
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, salt);
+  }
   next();
 });
 
 adminSchema.statics.findByCredentials = async function (username, password) {
   try {
     const admin = await Admin.findOne({ username });
+    if (!admin) throw new Error("Admin not found 😠");
     const pwd = await bcrypt.compare(password, admin.password);
     if (!pwd) throw new Error("Password did not match!!");
 
