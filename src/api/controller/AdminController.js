@@ -92,7 +92,7 @@ exports.updateVoter = async (req, res, next) => {
   try {
     const _id = req.query.id;
     const voter = await Voter.findByIdAndUpdate({ _id }, req.body);
-    res.send(responseHandler("voter"));
+    res.send(responseHandler("updated successfully"));
   } catch (error) {
     error.code = 404;
     res
@@ -109,7 +109,6 @@ exports.uploadVoterImage = async (req, res) => {
     const voter = await Voter.findByIdAndUpdate({ _id }, { image: upload });
     res.send(responseHandler("Uploaded successfully"));
   } catch (error) {
-    console.log(error);
     error.code = 406;
     res
       .status(error.code)
@@ -134,6 +133,7 @@ exports.candidateDetails = async (req, res) => {
   try {
     const aadhar_num = req.params;
     const cand = await Candidate.findOne(aadhar_num);
+    if (!cand) throw new Error("Candiate not found ⚡");
     const candDetails = cand.toObject();
     delete candDetails.votes;
     res.send(responseHandler(candDetails));
@@ -147,11 +147,14 @@ exports.candidateDetails = async (req, res) => {
 
 exports.addCandidate = async (req, res, next) => {
   try {
-    const cand = new Candidate(req.body);
+    // TODO: email has to be checked in Voters before saving candiate
+    const candData = req.body.candidate;
+    delete req.body.candidate.position;
+    const cand = new Candidate(req.body.candidate);
     const saveCand = await cand.save();
-    const vBody = Object.assign({}, req.body);
+    const vBody = Object.assign({}, req.body.candidate);
     delete vBody.position;
-    const v = new Voter(vBody);
+    const v = new Voter(candData);
     await v.save();
     if (saveCand.email) {
       const mailObj = {
@@ -176,7 +179,7 @@ exports.updateCandidate = async (req, res, next) => {
   try {
     const _id = req.query.id;
     const candidate = await Candidate.findByIdAndUpdate({ _id }, req.body);
-    res.send(responseHandler(candidate));
+    res.send(responseHandler("update successdully"));
   } catch (error) {
     error.code = 404;
     res
