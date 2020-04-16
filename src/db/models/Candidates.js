@@ -19,7 +19,6 @@ const candidateSchema = new mongoose.Schema(
     },
     email: {
       type: mongoose.SchemaTypes.String,
-      unique: true,
       trim: true,
     },
     aadhar_num: {
@@ -27,6 +26,10 @@ const candidateSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+    },
+    country_code: {
+      type: mongoose.SchemaTypes.String,
+      default: "+91",
     },
     phone_num: {
       type: mongoose.SchemaTypes.Number,

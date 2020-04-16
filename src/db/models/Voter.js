@@ -15,7 +15,6 @@ const voterSchema = new mongoose.Schema(
     },
     email: {
       type: mongoose.SchemaTypes.String,
-      unique: true,
       trim: true,
     },
     fname: {
@@ -28,6 +27,10 @@ const voterSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+    },
+    country_code: {
+      type: mongoose.SchemaTypes.String,
+      default: "+91",
     },
     phone_num: {
       type: mongoose.SchemaTypes.Number,
@@ -48,14 +51,13 @@ const voterSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Boolean,
       default: false,
     },
-    tokens: [
-      {
-        token: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+    token: {
+      type: mongoose.SchemaTypes.String,
+    },
+    loginCounter: {
+      type: mongoose.SchemaTypes.Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
@@ -71,11 +73,11 @@ voterSchema.statics.findByCredentials = async function (aadhar_num, phone_num) {
       throw new Error("Aadhar number or Password won't match");
     }
     if (!voter) throw new Error("Aadhar number is not register");
-    const token = await jwt.sign(
+    voter.loginCounter = voter.loginCounter + 1;
+    voter.token = await jwt.sign(
       { _id: voter._id.toString(), expiresIn: 300000 },
       config.JWT_SECRET
     );
-    voter.tokens = voter.tokens.concat({ token });
     await voter.save();
     return voter;
   } catch (error) {
