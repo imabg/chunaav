@@ -46,15 +46,18 @@ exports.login = async (req, res, next) => {
   try {
     const { aadhar_num, phone_num } = req.body;
     const voter = await Voter.findByCredentials(aadhar_num, phone_num);
-    if (voter.email) {
-      const mailObj = {
-        to: voter.email,
-        from: config.MAIL_ID,
-        subject: `Welcome ${voter.name} on Chunaav: advanced and secure voting system`,
-        type: "login",
-      };
-      sendMail(mailObj);
+    if (voter.loginCounter !== 1) {
+      throw new Error("You already cast your vote 🙏");
     }
+    // if (voter.email) {
+    //   const mailObj = {
+    //     to: voter.email,
+    //     from: config.MAIL_ID,
+    //     subject: `Welcome ${voter.name} on Chunaav: advanced and secure voting system`,
+    //     type: "login",
+    //   };
+    //   sendMail(mailObj);
+    // }
     res.send(responseHandler(voter));
   } catch (error) {
     error.code = 404;
@@ -70,6 +73,48 @@ exports.voterDetails = async (req, res, next) => {
     res.send(responseHandler(voter));
   } catch (error) {
     error.code = 401;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+};
+
+exports.generateVotinScreen = async (req, res) => {
+  try {
+    const cityV = req.query.city;
+    const ward_numV = req.query.ward_num;
+   
+    const query = {
+      city: "" + cityV + "",
+      ward_num: parseInt(ward_numV),
+    };
+
+    const result = await Candidate.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: "$position",
+          candidates: {
+            $push: {
+              name: "$name",
+              city: "$city",
+              ward_num: "$ward_num",
+              logo: "$logo",
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          position: "$_id",
+          candidates: "$candidates",
+        },
+      },
+    ]);
+    res.send(responseHandler(result));
+  } catch (error) {
+    error.code = 403;
     res
       .status(error.code)
       .send({ success: false, code: error.code, err: error.message });
