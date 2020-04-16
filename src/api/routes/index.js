@@ -36,6 +36,9 @@ router.post("/api/admin/add", AdminController.add);
 router.post("/api/admin/login", AdminController.login);
 router.get("/api/admin/details", auth, AdminController.fetchAdmin);
 
+// ? SCREEN
+router.get('/api/screen', auth, VoterController.generateVotinScreen)
+
 // ! on-HOLD
 // Upload routes
 router.post("/api/admin/upload/voter", auth, upload.single("file"), AdminController.uploadVoterImage)
