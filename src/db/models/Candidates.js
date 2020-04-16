@@ -4,7 +4,7 @@ const candidateSchema = new mongoose.Schema(
   {
     logo: {
       type: mongoose.SchemaTypes.String,
-      required: true,
+      // required: true,
       trim: true,
     },
     name: {
