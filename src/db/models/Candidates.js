@@ -55,6 +55,9 @@ const candidateSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Number,
       default: 0,
     },
+    OTP: {
+      type: mongoose.SchemaTypes.Number,
+    }
   },
   { timestamps: true }
 );

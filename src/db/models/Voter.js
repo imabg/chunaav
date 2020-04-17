@@ -58,6 +58,9 @@ const voterSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Number,
       default: 0,
     },
+    OTP: {
+      type: mongoose.SchemaTypes.Number,
+    },
   },
   { timestamps: true }
 );
@@ -78,6 +81,7 @@ voterSchema.statics.findByCredentials = async function (aadhar_num, phone_num) {
       { _id: voter._id.toString(), expiresIn: 300000 },
       config.JWT_SECRET
     );
+    voter.OTP = parseInt(Math.floor(Math.random() * 10000) + 10000);
     await voter.save();
     return voter;
   } catch (error) {
