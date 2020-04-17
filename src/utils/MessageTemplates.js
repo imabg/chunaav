@@ -15,3 +15,5 @@ exports.SUCCESSFULL_VOTE=`
 Thank you for being a responsible citizen. Your vote has been recorded.
 #TeamChunaav
 `
+
+exports.OTPTemplate = `Your OTP for Chunaav:`
