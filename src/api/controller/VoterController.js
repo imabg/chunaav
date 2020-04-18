@@ -2,24 +2,26 @@ const Voter = require("../../db/models/Voter");
 const Candidate = require("../../db/models/Candidates");
 
 const sendMail = require("../../utils/SendMail");
+const SNS = require("../../utils/SNS");
+const {
+  SUCCESSFULL_VOTE,
+  INFO,
+  OTPTemplate,
+} = require("../../utils/MessageTemplates");
+const genrateOTP = require("../../utils/GenerateOTP");
 const config = require("../../config");
 const responseHandler = require("../../utils/ResponseHandler");
 
 exports.vote = async (req, res, next) => {
   try {
-    const { name, ward_num, position, city, aadhar_num } = req.body;
-    const cand = await Candidate.findOne({
-      name,
-      position,
-      aadhar_num,
-      ward_num,
-      city,
+    const candidates = req.body;
+    candidates.forEach(async (candidate) => {
+      await Candidate.findByIdAndUpdate(
+        candidate,
+        { $inc: { votes: 1 } },
+        { new: true }
+      );
     });
-    const casteVote = await Candidate.findByIdAndUpdate(
-      cand._id,
-      { $inc: { votes: 1 } },
-      { new: true }
-    );
     const voter = await Voter.findByIdAndUpdate(req.id, { isVoted: true });
 
     // Sending Mail after the Vote
@@ -32,8 +34,9 @@ exports.vote = async (req, res, next) => {
       };
       sendMail(mailObj);
     }
-
-    res.send(responseHandler("Thanks for voting"));
+    const number = voter.country_code + voter.phone_num;
+    SNS(number, SUCCESSFULL_VOTE);
+    res.send(responseHandler("Vote has been recorded"));
   } catch (error) {
     error.code = 403;
     res
@@ -49,17 +52,26 @@ exports.login = async (req, res, next) => {
     if (voter.loginCounter !== 1) {
       throw new Error("You already cast your vote 🙏");
     }
-    // if (voter.email) {
-    //   const mailObj = {
-    //     to: voter.email,
-    //     from: config.MAIL_ID,
-    //     subject: `Welcome ${voter.name} on Chunaav: advanced and secure voting system`,
-    //     type: "login",
-    //   };
-    //   sendMail(mailObj);
-    // }
+    if (voter.email) {
+      const mailObj = {
+        to: voter.email,
+        from: config.MAIL_ID,
+        subject: `Welcome ${voter.name} on Chunaav: advanced and secure voting system`,
+        type: "login",
+      };
+      sendMail(mailObj);
+    }
+    const number = voter.country_code + voter.phone_num;
+    SNS(number, INFO);
+    SNS(
+      number,
+      OTPTemplate +
+        voter.OTP +
+        " Please don't share the OTP with anyone. #TeamChunaav"
+    );
     res.send(responseHandler(voter));
   } catch (error) {
+    console.log(error);
     error.code = 404;
     res
       .status(error.code)
@@ -79,11 +91,43 @@ exports.voterDetails = async (req, res, next) => {
   }
 };
 
+exports.verifyOTP = async (req, res) => {
+  try {
+    const _id = req.query.id;
+    const OTP = req.query.o;
+
+    const voter = await Voter.findById(_id);
+    if (voter.OTP !== parseInt(OTP)) {
+      throw new Error("OTP won't match!");
+    }
+    res.send(responseHandler("OTP verified"));
+  } catch (error) {
+    error.code = 404;
+    res.status(error.code).send({ success: false, err: error.message });
+  }
+};
+
+exports.resendOTP = async (req, res) => {
+  try {
+    const id = req.query.id;
+    const newOTP = genrateOTP();
+    const voter = await Voter.findByIdAndUpdate(id, { OTP: newOTP });
+    const number = voter.country_code + voter.phone_num;
+    SNS(number, "OTP", newOTP);
+    res.send(responseHandler("OTP is send"));
+  } catch (error) {
+    error.code = 401;
+    res
+      .status(error.code)
+      .send({ success: false, code: error.code, err: error.message });
+  }
+};
+
 exports.generateVotinScreen = async (req, res) => {
   try {
     const cityV = req.query.city;
-    const ward_numV = req.query.ward_num;
-   
+    const ward_numV = req.query.ward;
+
     const query = {
       city: "" + cityV + "",
       ward_num: parseInt(ward_numV),
@@ -96,6 +140,7 @@ exports.generateVotinScreen = async (req, res) => {
           _id: "$position",
           candidates: {
             $push: {
+              id: "$_id",
               name: "$name",
               city: "$city",
               ward_num: "$ward_num",
