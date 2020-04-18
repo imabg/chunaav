@@ -3,8 +3,10 @@ const Voter = require("../../db/models/Voter");
 const Candidate = require("../../db/models/Candidates");
 
 const S3 = require("../../utils/S3");
-const SNS = require("../../utils/SNS")
+const SNS = require("../../utils/SNS");
+const { NEW_VOTER, NEW_CANDIDATE } = require("../../utils/MessageTemplates");
 const sendMail = require("../../utils/SendMail");
+
 const responseHandler = require("../../utils/ResponseHandler");
 const config = require("../../config");
 
@@ -71,17 +73,17 @@ exports.addVoter = async (req, res, next) => {
   try {
     const newVoter = new Voter(req.body);
     const saveVoter = await newVoter.save();
-    // TODO: remove the comments for final use
-    // if (saveVoter.email) {
-    //   const mailObj = {
-    //     to: saveVoter.email,
-    //     from: config.MAIL_ID,
-    //     subject: `Successfully register #${saveVoter.name} for Voting ✌`,
-    //     type: "addVoter",
-    //   };
-    //   await sendMail(mailObj);
-    // }
-    // const sendSms = SNS(saveCand.country_code saveVoter.phone_num)
+    if (saveVoter.email) {
+      const mailObj = {
+        to: saveVoter.email,
+        from: config.MAIL_ID,
+        subject: `Successfully register #${saveVoter.name} for Voting ✌`,
+        type: "addVoter",
+      };
+      await sendMail(mailObj);
+    }
+    const number = saveVoter.country_code + saveVoter.phone_num;
+    SNS(number, NEW_VOTER);
     res.send(responseHandler(saveVoter));
   } catch (error) {
     error.code = 401;
@@ -122,7 +124,7 @@ exports.uploadVoterImage = async (req, res) => {
 exports.deleteVoter = async (req, res, next) => {
   try {
     const _id = req.query.id;
-    const voter = await Voter.deleteOne({_id});
+    const voter = await Voter.deleteOne({ _id });
     res.send(responseHandler("Deleted successfully"));
   } catch (error) {
     error.code = 404;
@@ -150,26 +152,24 @@ exports.candidateDetails = async (req, res) => {
 
 exports.addCandidate = async (req, res, next) => {
   try {
-    // TODO: email has to be checked in Voters before saving candiate
-    // TODO: remove comments
     const candData = req.body.candidate;
-    // delete req.body.candidate.position;
     const cand = new Candidate(candData);
     const saveCand = await cand.save();
     const vBody = Object.assign({}, candData);
     delete vBody.position;
     const v = new Voter(vBody);
     await v.save();
-    // if (saveCand.email) {
-    //   const mailObj = {
-    //     to: saveCand.email,
-    //     from: config.MAIL_ID,
-    //     subject: `Successfully register #${saveCand.name} for #${saveCand.position} position`,
-    //     type: "addCandidate",
-    //   };
-    //   await sendMail(mailObj);
-    // }
-    // const sendSms = SNS(saveCand.country_code saveCand.phone_num)
+    if (saveCand.email) {
+      const mailObj = {
+        to: saveCand.email,
+        from: config.MAIL_ID,
+        subject: `Successfully register #${saveCand.name} for #${saveCand.position} position`,
+        type: "addCandidate",
+      };
+      await sendMail(mailObj);
+    }
+    const number = saveCand.country_code + saveCand.phone_num;
+    SNS(number, NEW_CANDIDATE);
     res.send(responseHandler(saveCand));
   } catch (error) {
     console.log(error);
