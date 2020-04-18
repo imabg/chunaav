@@ -345,7 +345,7 @@ module.exports = async (params) => {
           <tbody>
             <tr>
               <td style="padding:18px 0px 18px 0px; line-height:23px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content"><div><h3 style="text-align: center"><span style="color: #6C63FF">Thanks for being a responsible citizen of India.</span></h3>
-      <h3 style="text-align: center"><span style="color: #6C63FF">Hope, you will encourage people near to you to cast their vote and help the country to choose a better letter.</span></h3><div></div></div></td>
+      <h3 style="text-align: center"><span style="color: #6C63FF">Hope, you will encourage people near to you to cast their vote and help the country to choose a better leader.</span></h3><div></div></div></td>
             </tr>
           </tbody>
         </table><table class="module" role="module" data-type="text" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;" data-muid="0c684865-c11c-4b91-8773-52f6e175dc8f">
@@ -383,7 +383,7 @@ module.exports = async (params) => {
         Thanks for being a responsible citizen of India.
         ------------------------------------------------
         
-        Hope, you will encourage people near to you to cast their vote and help the country to choose a better letter.
+        Hope, you will encourage people near to you to cast their vote and help the country to choose a better leader.
         -----------------------------------------------------------------------------------------------------------------`;
   }
 
