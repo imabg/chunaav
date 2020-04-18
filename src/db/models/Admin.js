@@ -57,6 +57,8 @@ adminSchema.statics.findByCredentials = async function (username, password) {
     await admin.save();
     return admin;
   } catch (error) {
+    console.log("SECRET: ", config.JWT_SECRET)
+    console.log(error)
     throw new Error(error);
   }
 };
